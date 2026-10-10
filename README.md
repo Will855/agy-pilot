@@ -147,3 +147,35 @@ El sistema ha sido desacoplado en el paquete Python `pilot/` eliminando el códi
 └── logs/                 # Registros detallados con timestamps de ejecución
 ```
 
+
+---
+
+## 3. Patrones Arquitectónicos y de Diseño
+
+### 3.1 Patrones Arquitectónicos
+El sistema está desacoplado siguiendo una arquitectura **Modular y Orientada a Eventos** en CLI (Python), eliminando el código monolítico.
+Se implementa una separación estricta en capas: Infraestructura (git, shell), Lógica (engines) y Presentación (ui).
+
+### 3.2 Patrones de Diseño
+- **Inversión de Dependencias (IoC)**: Las ejecuciones de IA (`runner.py`) están abstraídas, permitiendo inyectar modelos de forma transparente.
+- **Patrón Facade**: Un único punto de entrada (`agy_pilot.py`) que enmascara la complejidad subyacente.
+- **Responsabilidad Única (SRP)**: Cada motor de caso de uso (Doctor, Sweep, Pipeline) es completamente independiente y cerrado a modificaciones de otras fases.
+
+---
+
+## 4. Flujo de Datos y Componentes Principales
+1. **Parser & CLI**: Recepción de argumentos (ticket, modelo, ramas) y validación del entorno.
+2. **Motores Híbridos (Dual Model)**: El flujo `sweep` divide tareas. **Flash High** analiza y aplica código; **Claude Sonnet** actúa como fiscal (solo verificación lógica, cero código escrito).
+3. **Control de Versiones Envolvente**: Todo cambio generado por la IA pasa por un staging local, tests y finalmente creación del Pull Request.
+
+---
+
+## 5. Consideraciones de Seguridad y Buenas Prácticas
+- **Aislamiento de Prompts**: Los "agentes" o prompts viven en archivos independientes y no interactúan entre sí directamente, previniendo fuga de contexto.
+- **Tribunales de Auto-revisión**: El sistema audita su propio output usando una instancia adversaria del modelo ("Abogado del diablo").
+- **Timeouts Controlados**: La ejecución de subprocesos (shell) y LLM tiene barreras de tiempo estrictas para evitar cuellos de botella infinitos.
+
+---
+
+## 6. Despliegue e Infraestructura CI/CD
+El CLI se instala a nivel de sistema mediante enlaces simbólicos (`symlinks`), permitiendo usar `agy-pilot` de forma global en cualquier proyecto del desarrollador, sin depender de entornos Docker ni integraciones complejas.
